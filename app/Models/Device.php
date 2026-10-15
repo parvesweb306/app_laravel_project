@@ -14,16 +14,42 @@ class Device extends Model
         'device_name',
         'pairing_code',
         'device_token',
+
         'is_locked',
+        'status',
+        'ip_address',
+
+        'unlock_pin',
         'unlock_code_hash',
         'unlock_code_expires_at',
+
         'last_seen',
+
+        // Device information
+        'manufacturer',
+        'model',
+        'android_version',
+        'battery_level',
+
+        // Location
+        'latitude',
+        'longitude',
+        'location_accuracy',
+        'location_updated_at',
     ];
 
     protected $casts = [
         'is_locked' => 'boolean',
+
         'last_seen' => 'datetime',
         'unlock_code_expires_at' => 'datetime',
+        'location_updated_at' => 'datetime',
+
+        'battery_level' => 'integer',
+
+        'latitude' => 'float',
+        'longitude' => 'float',
+        'location_accuracy' => 'float',
     ];
 
     public function user()

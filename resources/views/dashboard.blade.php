@@ -1,229 +1,368 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
 
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
 
-    <meta
-        name="viewport"
-        content="width=device-width, initial-scale=1.0"
-    >
-
-    <meta
-        name="csrf-token"
-        content="{{ csrf_token() }}"
-    >
-
-    <title>
-        Child Guard Dashboard
-    </title>
+    <title>Child Guard Dashboard</title>
 
     <style>
 
-        * {
-            box-sizing: border-box;
-        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
 
         :root {
-            --indigo: #4f46e5;
-            --indigo-dark: #4338ca;
-            --red: #dc2626;
-            --green: #16a34a;
-            --amber: #d97706;
-            --ink: #172033;
-            --muted: #687086;
-            --border: #e6e9ef;
-            --bg: #f5f7fb;
+            --navy: #0f172a;
+            --navy-light: #1e2946;
+            --slate: #334155;
+            --gold: #c9a24b;
+            --gold-light: #f2e4c0;
+            --sapphire: #1d4ed8;
+            --sapphire-light: #eef3ff;
+            --ruby: #9f1239;
+            --ruby-soft: #fde8ee;
+            --emerald: #0f766e;
+            --emerald-soft: #e5f7f2;
+            --ink: #1a2035;
+            --muted: #6b7280;
+            --border: #e7e9ef;
+            --bg: #f4f5f9;
+            --card: #ffffff;
+            --shadow: 0 2px 10px rgba(15, 23, 42, .06), 0 1px 2px rgba(15, 23, 42, .04);
+            --shadow-lg: 0 14px 34px rgba(15, 23, 42, .12);
         }
 
         body {
-            margin: 0;
             background: var(--bg);
-            font-family:
-                -apple-system,
-                Segoe UI,
-                Arial,
-                sans-serif;
+            font-family: "Segoe UI", "Noto Sans Bengali", -apple-system, Arial, sans-serif;
             color: var(--ink);
+            line-height: 1.5;
+            min-height: 100vh;
         }
 
+        /* ---------- Topbar ---------- */
+
         .topbar {
-            background: white;
-            border-bottom: 1px solid var(--border);
-            padding: 16px 24px;
+            background: linear-gradient(120deg, #0b1224 0%, #16213e 55%, #1e2946 100%);
+            padding: 16px 30px;
             display: flex;
             align-items: center;
             justify-content: space-between;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            box-shadow: 0 4px 24px rgba(9, 12, 24, .35);
+            border-bottom: 1px solid rgba(201, 162, 75, .25);
         }
 
         .brand {
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 12px;
             font-weight: 800;
             font-size: 18px;
+            color: #f4ead0;
+            letter-spacing: .3px;
         }
 
         .brand .dot {
-            width: 34px;
-            height: 34px;
-            border-radius: 10px;
-            background: var(--indigo);
+            width: 38px;
+            height: 38px;
+            background: linear-gradient(135deg, #c9a24b, #8a6d1f);
+            border-radius: 11px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 17px;
+            font-size: 18px;
+            box-shadow: 0 3px 10px rgba(201, 162, 75, .35);
         }
 
-        .topbar .user {
-            font-size: 13px;
-            color: var(--muted);
+        .topbar-right {
+            display: flex;
+            align-items: center;
+            gap: 20px;
         }
+
+        .nav-link {
+            color: rgba(230, 232, 240, .8);
+            text-decoration: none;
+            font-size: 13.5px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 14px;
+            border-radius: 9px;
+            transition: background .15s, color .15s;
+        }
+
+        .nav-link:hover { background: rgba(201, 162, 75, .14); color: var(--gold-light); }
+
+        .user-chip {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding-left: 18px;
+            border-left: 1px solid rgba(255,255,255,.14);
+        }
+
+        .avatar {
+            width: 34px;
+            height: 34px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #c9a24b, #8a6d1f);
+            color: #1a1508;
+            font-weight: 800;
+            font-size: 13px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 0 0 2px rgba(255,255,255,.15);
+        }
+
+        .user-name { font-size: 13.5px; font-weight: 700; color: #f1f3f9; }
+        .user-role {
+            font-size: 10.5px;
+            color: var(--gold-light);
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: .06em;
+        }
+
+        .logout-btn {
+            background: rgba(255,255,255,.06);
+            border: 1px solid rgba(255,255,255,.18);
+            color: #e5e7eb;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 700;
+            padding: 6px 12px;
+            border-radius: 8px;
+            transition: background .15s;
+        }
+        .logout-btn:hover { background: rgba(255,255,255,.14); }
+
+        /* ---------- Layout ---------- */
 
         .container {
-            width: 100%;
-            max-width: 1200px;
-            margin: auto;
-            padding: 28px 20px 60px;
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 30px 20px 60px;
         }
 
         .stats-row {
             display: grid;
-            grid-template-columns:
-                repeat(3, 1fr);
-            gap: 16px;
-            margin-bottom: 24px;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 18px;
+            margin-bottom: 26px;
         }
 
         .stat {
-            background: white;
             border-radius: 16px;
-            padding: 18px 20px;
-            box-shadow:
-                0 6px 20px
-                rgba(0,0,0,.04);
+            padding: 22px;
+            box-shadow: var(--shadow);
+            position: relative;
+            overflow: hidden;
+            border: 1px solid var(--border);
+            background: var(--card);
         }
 
-        .stat .num {
-            font-size: 28px;
-            font-weight: 800;
+        .stat::before {
+            content: '';
+            position: absolute;
+            left: 0; top: 0; bottom: 0;
+            width: 5px;
         }
+
+        .stat.total::before { background: linear-gradient(180deg, var(--navy), var(--slate)); }
+        .stat.locked::before { background: linear-gradient(180deg, var(--ruby), #e11d48); }
+        .stat.unlocked::before { background: linear-gradient(180deg, var(--emerald), #10b981); }
+
+        .stat .num { font-size: 30px; font-weight: 800; color: var(--ink); }
+        .stat.total .num { color: var(--navy); }
+        .stat.locked .num { color: var(--ruby); }
+        .stat.unlocked .num { color: var(--emerald); }
 
         .stat .label {
-            font-size: 13px;
+            font-size: 12.5px;
             color: var(--muted);
-            margin-top: 2px;
-        }
-
-        .stat.locked .num {
-            color: var(--red);
-        }
-
-        .stat.unlocked .num {
-            color: var(--green);
+            margin-top: 4px;
+            font-weight: 600;
         }
 
         .card {
-            background: white;
-            border-radius: 18px;
-            padding: 24px;
-            margin-bottom: 24px;
-            box-shadow:
-                0 8px 30px
-                rgba(0,0,0,.06);
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 26px;
+            margin-bottom: 22px;
+            box-shadow: var(--shadow);
         }
 
         .card h2 {
-            margin-top: 0;
-            font-size: 18px;
+            font-size: 16.5px;
+            margin-bottom: 6px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: var(--ink);
         }
 
-        .card > p {
+        .card p.sub {
             color: var(--muted);
             font-size: 13px;
-            margin-top: -6px;
-        }
-
-        .form-row {
-            display: flex;
-            gap: 12px;
-            flex-wrap: wrap;
-        }
-
-        input {
-            height: 48px;
-            padding: 0 15px;
-            border: 1px solid #dfe3eb;
-            border-radius: 10px;
-            font-size: 15px;
-            outline: none;
-            flex: 1;
-            min-width: 220px;
-        }
-
-        input:focus {
-            border-color: var(--indigo);
-        }
-
-        button {
-            border: none;
-            cursor: pointer;
-            border-radius: 10px;
-            padding: 12px 18px;
-            font-size: 14px;
-            font-weight: 600;
-            transition: opacity .15s;
-        }
-
-        button:hover {
-            opacity: .9;
-        }
-
-        .btn-primary {
-            background: var(--indigo);
-            color: white;
-        }
-
-        .btn-danger {
-            background: var(--red);
-            color: white;
-        }
-
-        .btn-success {
-            background: var(--green);
-            color: white;
-        }
-
-        .btn-secondary {
-            background: #eef0f4;
-            color: #111827;
+            margin-bottom: 18px;
         }
 
         .alert {
-            padding: 15px 18px;
+            padding: 14px 18px;
             border-radius: 12px;
             margin-bottom: 20px;
             font-size: 14px;
+            font-weight: 600;
+            border-left: 4px solid transparent;
         }
 
-        .alert-success {
-            background: #dcfce7;
-            color: #166534;
+        .alert-success { background: var(--emerald-soft); color: #065f56; border-color: var(--emerald); }
+        .alert-error { background: var(--ruby-soft); color: #881337; border-color: var(--ruby); }
+
+        .form-row { display: flex; gap: 12px; }
+
+        input[type="text"] {
+            flex: 1;
+            padding: 13px 16px;
+            border: 1.5px solid var(--border);
+            border-radius: 11px;
+            font-size: 14px;
+            outline: none;
+            transition: border-color .15s, box-shadow .15s;
+            background: #fafbfd;
         }
 
-        .alert-error {
-            background: #fee2e2;
-            color: #991b1b;
+        input[type="text"]:focus {
+            border-color: var(--navy-light);
+            box-shadow: 0 0 0 4px rgba(30,41,70,.08);
+            background: white;
         }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--navy-light), var(--navy));
+            color: #f4ead0;
+            border: 1px solid rgba(201,162,75,.4);
+            padding: 13px 24px;
+            border-radius: 11px;
+            font-weight: 700;
+            font-size: 14px;
+            cursor: pointer;
+            white-space: nowrap;
+            box-shadow: 0 6px 16px rgba(15,23,42,.25);
+            transition: transform .12s, box-shadow .12s;
+        }
+
+        .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 8px 22px rgba(15,23,42,.32); }
+
+        .btn-success {
+            background: linear-gradient(135deg, var(--emerald), #10b981);
+            color: white;
+            border: none;
+            padding: 11px 16px;
+            border-radius: 10px;
+            font-weight: 700;
+            font-size: 12.5px;
+            cursor: pointer;
+            width: 100%;
+            box-shadow: 0 4px 12px rgba(15,118,110,.25);
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, var(--ruby), #e11d48);
+            color: white;
+            border: none;
+            padding: 11px 16px;
+            border-radius: 10px;
+            font-weight: 700;
+            font-size: 12.5px;
+            cursor: pointer;
+            width: 100%;
+            box-shadow: 0 4px 12px rgba(159,18,57,.22);
+        }
+
+        .btn-danger.solid { background: linear-gradient(135deg, #7f1d1d, #9f1239); }
+
+        .btn-danger:disabled {
+            background: #f0cdd6;
+            box-shadow: none;
+            cursor: not-allowed;
+        }
+
+        .code-box {
+            background: linear-gradient(135deg, #fbf7ec, var(--gold-light));
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+            margin-bottom: 14px;
+            border: 1px solid #ecd9a3;
+        }
+
+        .unlock-code {
+            font-size: 32px;
+            font-weight: 800;
+            letter-spacing: 5px;
+            color: #8a6d1f;
+            margin: 8px 0;
+        }
+
+        .link-row {
+            display: flex;
+            align-items: stretch;
+            gap: 8px;
+            border: 1.5px dashed #d7dbe6;
+            border-radius: 11px;
+            padding: 10px 12px;
+            background: #fafbfd;
+        }
+
+        .link-row .link-text {
+            flex: 1;
+            font-size: 12px;
+            color: var(--sapphire);
+            font-weight: 600;
+            word-break: break-all;
+            display: flex;
+            align-items: center;
+        }
+
+        .copy-btn {
+            background: linear-gradient(135deg, var(--navy-light), var(--sapphire));
+            color: white;
+            border: none;
+            padding: 9px 15px;
+            border-radius: 8px;
+            font-size: 12.5px;
+            font-weight: 700;
+            cursor: pointer;
+            white-space: nowrap;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            transition: transform .12s;
+        }
+
+        .copy-btn:hover { transform: translateY(-1px); }
+        .copy-btn.copied { background: linear-gradient(135deg, var(--emerald), #10b981); }
+
+        .empty {
+            text-align: center;
+            padding: 44px 20px;
+            color: var(--muted);
+        }
+
+        .empty .big { font-size: 42px; margin-bottom: 12px; }
 
         .device-grid {
             display: grid;
-            grid-template-columns:
-                repeat(
-                    auto-fit,
-                    minmax(320px, 1fr)
-                );
+            grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
             gap: 18px;
         }
 
@@ -231,310 +370,207 @@
             border: 1px solid var(--border);
             border-radius: 16px;
             padding: 20px;
-            transition:
-                box-shadow .15s,
-                border-color .15s;
+            display: flex;
+            flex-direction: column;
+            gap: 13px;
+            background: #fdfdfe;
+            transition: box-shadow .15s, transform .15s;
         }
 
-        .device:hover {
-            box-shadow:
-                0 10px 26px
-                rgba(0,0,0,.06);
-            border-color: #d8dcE6;
-        }
+        .device:hover { box-shadow: var(--shadow-lg); transform: translateY(-2px); }
 
         .device-header {
             display: flex;
             justify-content: space-between;
-            gap: 10px;
             align-items: flex-start;
+            gap: 10px;
         }
 
-        .device-name {
-            font-size: 18px;
+        .device-name { font-weight: 800; font-size: 16px; color: var(--ink); }
+        .device-sub { font-size: 12px; color: var(--muted); margin-top: 3px; font-weight: 500; }
+        .device-sub.owner {
+            color: var(--navy);
             font-weight: 700;
-        }
-
-        .device-sub {
-            font-size: 12px;
-            color: var(--muted);
-            margin-top: 2px;
+            background: #eef1f7;
+            display: inline-block;
+            padding: 2px 9px;
+            border-radius: 999px;
+            margin-top: 5px;
+            border: 1px solid #dde2ee;
         }
 
         .badge {
-            padding: 5px 11px;
-            border-radius: 30px;
-            font-size: 11px;
+            font-size: 10.5px;
             font-weight: 800;
-            letter-spacing: .03em;
+            padding: 5px 11px;
+            border-radius: 999px;
             white-space: nowrap;
+            letter-spacing: .03em;
         }
 
-        .badge-locked {
-            background: #fee2e2;
-            color: #991b1b;
-        }
-
-        .badge-unlocked {
-            background: #dcfce7;
-            color: #166534;
-        }
-
-        .badge-offline {
-            background: #f3f4f6;
-            color: #6b7280;
-        }
-
-        .badge-not-paired {
-            background: #fef3c7;
-            color: #92400e;
-        }
+        .badge-not-paired { background: #eef1f7; color: var(--slate); }
+        .badge-locked { background: var(--ruby-soft); color: var(--ruby); }
+        .badge-unlocked { background: var(--emerald-soft); color: var(--emerald); }
+        .badge-offline { background: var(--gold-light); color: #8a6d1f; }
 
         .detail-list {
-            margin-top: 16px;
-            border-top: 1px solid var(--border);
-            padding-top: 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 7px;
+            font-size: 12.5px;
+            background: #f8f9fb;
+            border-radius: 10px;
+            padding: 12px 14px;
         }
 
         .detail-row {
             display: flex;
             justify-content: space-between;
-            gap: 10px;
-            font-size: 13px;
-            padding: 5px 0;
+            gap: 8px;
         }
 
-        .detail-row .k {
-            color: var(--muted);
-        }
-
-        .detail-row .v {
-            font-weight: 600;
-            text-align: right;
-        }
-
-        .detail-row .v.mono {
-            font-family:
-                ui-monospace,
-                Consolas,
-                monospace;
-            letter-spacing: .05em;
-        }
-
-        .code-box {
-            margin-top: 15px;
-            padding: 15px;
-            border-radius: 12px;
-            background: #eef2ff;
-        }
-
-        .unlock-code {
-            font-size: 32px;
-            font-weight: 800;
-            letter-spacing: 7px;
-            margin-top: 5px;
-            color: #3730a3;
-        }
+        .detail-row .k { color: var(--muted); font-weight: 500; }
+        .detail-row .v { font-weight: 700; text-align: right; color: var(--ink); }
+        .detail-row .mono { font-family: monospace; letter-spacing: 1px; color: var(--sapphire); }
 
         .actions {
             display: flex;
-            gap: 8px;
             flex-wrap: wrap;
-            margin-top: 16px;
+            gap: 8px;
         }
 
-        .actions form {
-            display: inline;
-        }
+        .actions form { flex: 1; min-width: 100px; }
 
-        .actions button {
-            width: 100%;
-        }
-
-        .download-link {
-            display: block;
-            margin-top: 15px;
-            padding: 10px 12px;
-            border-radius: 10px;
-            background: #f8fafc;
-            border: 1px dashed #cbd5e1;
-            color: #334155;
-            word-break: break-all;
-            text-decoration: none;
+        .open-link {
             font-size: 12px;
+            color: var(--sapphire);
+            text-decoration: none;
+            font-weight: 700;
         }
+        .open-link:hover { text-decoration: underline; }
 
-        .download-link:hover {
-            background: #f1f5f9;
-        }
-
-        .empty {
-            padding: 48px 20px;
-            text-align: center;
-            color: var(--muted);
-        }
-
-        .empty .big {
-            font-size: 38px;
-            margin-bottom: 8px;
-        }
-
-        @media(max-width: 700px) {
-
-            .stats-row {
-                grid-template-columns: 1fr;
-            }
-
-            .form-row {
-                flex-direction: column;
-            }
-
-            input,
-            .form-row button {
-                width: 100%;
-            }
+        @media (max-width: 640px) {
+            .stats-row { grid-template-columns: 1fr; }
+            .form-row { flex-direction: column; }
+            .topbar { padding: 14px 16px; flex-wrap: wrap; gap: 10px; }
+            .topbar-right { gap: 12px; flex-wrap: wrap; }
         }
 
     </style>
 
 </head>
-
 <body>
 
+<div style="max-width:700px;margin:20px auto;padding:18px;border:1px solid #ddd;border-radius:12px">
+    <h2>multiple install link</h2>
+    <p>এই link নতুন multiple phone-এ খুলে Play Store থেকে app install করুন:</p>
+    <input
+        type="text"
+        readonly
+        value="{{ $familyLink }}"
+        onclick="this.select()"
+        style="width:100%;padding:12px;margin-top:8px"
+    >
+    <p style="margin-top:8px">Link-টি copy করে নতুন phone-এ পাঠাতে পারবেন।</p>
+</div>
 <div class="topbar">
 
     <div class="brand">
         <div class="dot">🛡️</div>
-        Child Guard
+        Admin Dashboard
     </div>
 
-    <div class="user">
-        {{ auth()->user()->name ?? '' }}
+    <div class="topbar-right">
+
+        @if(auth()->user()->isAdmin())
+            <a href="{{ route('admin.users.index') }}" class="nav-link">
+                👤 Users ম্যানেজ করুন
+            </a>
+        @endif
+
+        <a href="{{ route('profile.edit') }}" class="nav-link">
+            ⚙️ Profile
+        </a>
+
+        <div class="user-chip">
+
+            <div class="avatar">
+                {{ strtoupper(substr(auth()->user()->name ?? 'U', 0, 1)) }}
+            </div>
+
+            <div>
+                <div class="user-name">{{ auth()->user()->name ?? '' }}</div>
+                <div class="user-role">
+                    {{ auth()->user()->isAdmin() ? 'Main Admin' : 'User' }}
+                </div>
+            </div>
+
+            <form method="POST" action="{{ route('logout') }}">
+                @csrf
+                <button type="submit" class="logout-btn">Logout</button>
+            </form>
+
+        </div>
+
     </div>
 
 </div>
 
 <div class="container">
 
-    {{-- Stats --}}
-
     <div class="stats-row">
 
-        <div class="stat">
-            <div class="num">
-                {{ $devices->count() }}
-            </div>
-            <div class="label">
-                মোট Device
-            </div>
+        <div class="stat total">
+            <div class="num">{{ $devices->count() }}</div>
+            <div class="label">মোট Device</div>
         </div>
 
         <div class="stat locked">
-            <div class="num">
-                {{ $devices->where('is_locked', true)->count() }}
-            </div>
-            <div class="label">
-                Locked
-            </div>
+            <div class="num">{{ $devices->where('is_locked', true)->count() }}</div>
+            <div class="label">Locked</div>
         </div>
 
         <div class="stat unlocked">
-            <div class="num">
-                {{ $devices->where('is_locked', false)->count() }}
-            </div>
-            <div class="label">
-                Unlocked
-            </div>
+            <div class="num">{{ $devices->where('is_locked', false)->count() }}</div>
+            <div class="label">Unlocked</div>
         </div>
 
     </div>
 
 
-    {{-- Success --}}
-
     @if(session('success'))
-
-        <div class="alert alert-success">
-
-            {{ session('success') }}
-
-        </div>
-
+        <div class="alert alert-success">{{ session('success') }}</div>
     @endif
 
-
-    {{-- Error --}}
 
     @if(session('error'))
-
-        <div class="alert alert-error">
-
-            {{ session('error') }}
-
-        </div>
-
+        <div class="alert alert-error">{{ session('error') }}</div>
     @endif
 
-
-    {{-- Unlock Code --}}
 
     @if(session('unlock_code'))
 
         <div class="card">
-
-            <h2>
-                🔑 Unlock Code
-            </h2>
-
-            <p>
-                এই code ফোনের locked screen-এ দিতে হবে।
-            </p>
+            <h2>🔑 Unlock Code</h2>
+            <p class="sub">এই code ফোনের locked screen-এ দিতে হবে। 30 মিনিট valid।</p>
 
             <div class="code-box">
-
-                <div>
-                    6 Digit Unlock Code
-                </div>
-
-                <div class="unlock-code">
-
-                    {{ session('unlock_code') }}
-
-                </div>
-
-                <div>
-                    এই code 30 মিনিট valid।
-                </div>
-
+                <div style="font-size:12px;color:var(--muted); font-weight:600;">6 Digit Unlock Code</div>
+                <div class="unlock-code">{{ session('unlock_code') }}</div>
             </div>
-
         </div>
 
     @endif
 
 
-    {{-- Create Device --}}
-
     <div class="card">
+        <h2>➕ নতুন Child Device যোগ করুন</h2>
+        <p class="sub">Device তৈরি করলে একটি pairing code এবং APK download link তৈরি হবে।</p>
 
-        <h2>
-            ➕ নতুন Child Device যোগ করুন
-        </h2>
-
-        <p>
-            Device তৈরি করলে একটি pairing code
-            এবং APK download link তৈরি হবে।
-        </p>
-
-        <form
-            method="POST"
-            action="{{ route('devices.create-pairing') }}"
-        >
-
+        <form method="POST" action="{{ route('devices.create-pairing') }}">
             @csrf
 
             <div class="form-row">
-
                 <input
                     type="text"
                     name="device_name"
@@ -542,77 +578,38 @@
                     maxlength="100"
                     required
                 >
-
-                <button
-                    type="submit"
-                    class="btn-primary"
-                >
-                    Create Device
-                </button>
-
+                <button type="submit" class="btn-primary">Create Device</button>
             </div>
-
         </form>
-
     </div>
 
-
-    {{-- Device Created --}}
 
     @if(session('device_created'))
 
         @php
-
-            $createdDevice =
-                \App\Models\Device::find(
-                    session('device_created')
-                );
-
+            $createdDevice = \App\Models\Device::find(session('device_created'));
+            $createdLink = $createdDevice
+                ? route('devices.download-page', $createdDevice->pairing_code)
+                : null;
         @endphp
 
         @if($createdDevice)
 
             <div class="card">
-
-                <h2>
-                    ✅ Device তৈরি হয়েছে
-                </h2>
-
-                <p>
-                    নিচের Pairing Code এবং Download Link
-                    child-এর phone-এ ব্যবহার করুন।
-                </p>
+                <h2>✅ Device তৈরি হয়েছে</h2>
+                <p class="sub">নিচের Pairing Code এবং Download Link child-এর phone-এ ব্যবহার করুন।</p>
 
                 <div class="code-box">
-
-                    <strong>
-                        Pairing Code
-                    </strong>
-
-                    <div class="unlock-code">
-
-                        {{ $createdDevice->pairing_code }}
-
-                    </div>
-
+                    <strong style="font-size:12px;color:var(--muted); font-weight:600;">Pairing Code</strong>
+                    <div class="unlock-code">{{ $createdDevice->pairing_code }}</div>
                 </div>
 
-                <a
-                    href="{{ route(
-                        'devices.download-page',
-                        $createdDevice->pairing_code
-                    ) }}"
-                    target="_blank"
-                    class="download-link"
-                >
-
-                    {{ route(
-                        'devices.download-page',
-                        $createdDevice->pairing_code
-                    ) }}
-
-                </a>
-
+                <div class="link-row">
+                    <div class="link-text" id="link-created">{{ $createdLink }}</div>
+                    <button type="button" class="copy-btn" onclick="copyLink('link-created', this)">
+                        📋 Copy
+                    </button>
+                </div>
             </div>
 
         @endif
@@ -620,23 +617,15 @@
     @endif
 
 
-    {{-- Devices --}}
-
     <div class="card">
-
-        <h2>
-            📱 আমার সব Device
-        </h2>
+        <h2>📱 আমার সব Device</h2>
 
         @if($devices->count() === 0)
 
             <div class="empty">
-
                 <div class="big">📭</div>
-
                 এখনো কোনো device তৈরি করা হয়নি।<br>
                 উপরের ফর্ম থেকে প্রথম device যোগ করুন।
-
             </div>
 
         @else
@@ -646,63 +635,33 @@
                 @foreach($devices as $device)
 
                     @php
-
-                        $isPaired =
-                            !empty($device->device_token);
-
-                        $isOnline =
-                            $device->last_seen &&
-                            $device->last_seen
-                                ->gt(now()->subMinutes(2));
-
+                        $isPaired = !empty($device->device_token);
+                        $isOnline = $device->last_seen && $device->last_seen->gt(now()->subMinutes(2));
+                        $deviceLink = route('devices.download-page', $device->pairing_code);
+                        $linkId = 'link-' . $device->id;
                     @endphp
 
-                    <div
-                        class="device"
-                        id="device-{{ $device->id }}"
-                        data-paired="{{ $isPaired ? '1' : '0' }}"
-                    >
+                    <div class="device" id="device-{{ $device->id }}" data-paired="{{ $isPaired ? '1' : '0' }}">
 
                         <div class="device-header">
 
                             <div>
+                                <div class="device-name">{{ $device->device_name }}</div>
+                                <div class="device-sub">Code: {{ $device->pairing_code }}</div>
 
-                                <div class="device-name">
-                                    {{ $device->device_name }}
-                                </div>
-
-                                <div class="device-sub">
-                                    Code:
-                                    {{ $device->pairing_code }}
-                                </div>
-
+                                @if(auth()->user()->isAdmin() && $device->user)
+                                    <div class="device-sub owner">👤 {{ $device->user->name }}</div>
+                                @endif
                             </div>
 
-
                             @if(!$isPaired)
-
-                                <span class="badge badge-not-paired">
-                                    NOT PAIRED
-                                </span>
-
+                                <span class="badge badge-not-paired">NOT PAIRED</span>
                             @elseif($device->is_locked)
-
-                                <span class="badge badge-locked">
-                                    LOCKED
-                                </span>
-
+                                <span class="badge badge-locked">LOCKED</span>
                             @elseif($isOnline)
-
-                                <span class="badge badge-unlocked">
-                                    UNLOCKED
-                                </span>
-
+                                <span class="badge badge-unlocked">UNLOCKED</span>
                             @else
-
-                                <span class="badge badge-offline">
-                                    OFFLINE
-                                </span>
-
+                                <span class="badge badge-offline">OFFLINE</span>
                             @endif
 
                         </div>
@@ -717,133 +676,77 @@
 
                             <div class="detail-row">
                                 <span class="k">Paired</span>
-                                <span class="v">
-                                    {{ $isPaired ? 'হ্যাঁ' : 'না, এখনো APK connect করেনি' }}
-                                </span>
+                                <span class="v">{{ $isPaired ? 'হ্যাঁ' : 'না, এখনো connect করেনি' }}</span>
                             </div>
 
                             <div class="detail-row">
                                 <span class="k">Lock Status</span>
-                                <span class="v">
-                                    {{ $device->is_locked ? 'Locked' : 'Unlocked' }}
-                                </span>
+                                <span class="v">{{ $device->is_locked ? 'Locked' : 'Unlocked' }}</span>
                             </div>
 
                             <div class="detail-row">
                                 <span class="k">Last Seen</span>
                                 <span class="v">
-                                    @if($device->last_seen)
-                                        {{ $device->last_seen->diffForHumans() }}
-                                    @else
-                                        কখনো না
-                                    @endif
+                                    {{ $device->last_seen ? $device->last_seen->diffForHumans() : 'কখনো না' }}
                                 </span>
                             </div>
 
                             <div class="detail-row">
                                 <span class="k">যোগ করা হয়েছে</span>
-                                <span class="v">
-                                    {{ $device->created_at->diffForHumans() }}
-                                </span>
+                                <span class="v">{{ $device->created_at->diffForHumans() }}</span>
                             </div>
 
                         </div>
 
 
-                        {{-- Download --}}
+                        <div class="link-row">
+                            <div class="link-text" id="{{ $linkId }}">{{ $deviceLink }}</div>
+                            <button type="button" class="copy-btn" onclick="copyLink('{{ $linkId }}', this)">
+                                📋 Copy
+                            </button>
+                        </div>
 
-                        <a
-                            href="{{ route(
-                                'devices.download-page',
-                                $device->pairing_code
-                            ) }}"
-                            target="_blank"
-                            class="download-link"
-                        >
-
-                            ⬇️ Download / Pairing লিঙ্ক দেখুন
-
+                        <a href="{{ $deviceLink }}" target="_blank" class="open-link">
+                            ↗️ Download / Pairing পেজ খুলুন
                         </a>
 
 
-                        {{-- Actions --}}
-
                         <div class="actions">
-
-
-                            {{-- LOCK --}}
 
                             @if(!$device->is_locked)
 
-                                <form
-                                    method="POST"
-                                    action="{{ route(
-                                        'devices.lock',
-                                        $device
-                                    ) }}"
-                                    style="flex:1"
-                                >
-
+                                <form method="POST" action="{{ route('devices.lock', $device) }}">
                                     @csrf
-
-                                    <button
-                                        type="submit"
-                                        class="btn-danger"
-                                        {{ !$isPaired ? 'disabled' : '' }}
-                                    >
+                                    <button type="submit" class="btn-danger" {{ !$isPaired ? 'disabled' : '' }}>
                                         🔒 Lock
                                     </button>
-
                                 </form>
 
                             @else
 
-                                {{-- UNLOCK DIRECTLY --}}
-
-                                <form
-                                    method="POST"
-                                    action="{{ route(
-                                        'devices.unlock',
-                                        $device
-                                    ) }}"
-                                    style="flex:1"
-                                >
-
+                                <form method="POST" action="{{ route('devices.unlock', $device) }}">
                                     @csrf
-
-                                    <button
-                                        type="submit"
-                                        class="btn-success"
-                                    >
-                                        🔓 Unlock
-                                    </button>
-
+                                    <button type="submit" class="btn-success">🔓 Unlock</button>
                                 </form>
 
-
-                                {{-- Generate Code --}}
-
-                                <form
-                                    method="POST"
-                                    action="{{ route(
-                                        'devices.generate-unlock-code',
-                                        $device
-                                    ) }}"
-                                    style="flex:1"
-                                >
-
+                                <form method="POST" action="{{ route('devices.generate-unlock-code', $device) }}">
                                     @csrf
-
-                                    <button
-                                        type="submit"
-                                        class="btn-primary"
-                                    >
-                                        🔑 Code দিন
-                                    </button>
-
+                                    <button type="submit" class="btn-primary" style="width:100%">🔑 Code দিন</button>
                                 </form>
 
                             @endif
+
+                            <form
+                                method="POST"
+                                action="{{ route('devices.destroy', $device) }}"
+                                onsubmit="return confirm('এই device মুছে ফেলা হবে। নিশ্চিত?');"
+                            >
+                                @csrf
+                                @method('DELETE')
+                                <button type="submit" class="btn-danger solid">
+                                    🗑️ Delete
+                                </button>
+                            </form>
 
                         </div>
 
@@ -862,84 +765,72 @@
 
 <script>
 
-    /*
-     * Refresh dashboard every 10 seconds
-     * (badge + last-seen only, no full reload).
-     */
+    function copyLink(elementId, btn) {
+
+        const text = document.getElementById(elementId).innerText.trim();
+
+        navigator.clipboard.writeText(text).then(function () {
+
+            const original = btn.innerHTML;
+            btn.innerHTML = '✅ Copied';
+            btn.classList.add('copied');
+
+            setTimeout(function () {
+                btn.innerHTML = original;
+                btn.classList.remove('copied');
+            }, 1800);
+
+        }).catch(function () {
+
+            const range = document.createRange();
+            const node = document.getElementById(elementId);
+            range.selectNode(node);
+            window.getSelection().removeAllRanges();
+            window.getSelection().addRange(range);
+            document.execCommand('copy');
+            window.getSelection().removeAllRanges();
+
+            btn.innerHTML = '✅ Copied';
+            setTimeout(function () {
+                btn.innerHTML = '📋 Copy';
+            }, 1800);
+
+        });
+    }
+
     setInterval(function () {
 
-        fetch(
-            "{{ route('dashboard.status') }}",
-            {
-                headers: {
-                    'Accept':
-                        'application/json'
-                }
-            }
-        )
-        .then(response =>
-            response.json()
-        )
+        fetch("{{ route('dashboard.status') }}", {
+            headers: { 'Accept': 'application/json' }
+        })
+        .then(response => response.json())
         .then(data => {
 
-            if (!data.success) {
-                return;
-            }
+            if (!data.success) return;
 
-            data.devices.forEach(
-                function(device) {
+            data.devices.forEach(function (device) {
 
-                    const card =
-                        document.getElementById(
-                            'device-' +
-                            device.id
-                        );
+                const card = document.getElementById('device-' + device.id);
+                if (!card) return;
 
-                    if (!card) {
-                        return;
-                    }
+                const badge = card.querySelector('.badge');
+                if (!badge) return;
 
-                    const badge =
-                        card.querySelector(
-                            '.badge'
-                        );
-
-                    if (!badge) {
-                        return;
-                    }
-
-                    if (!device.paired) {
-
-                        badge.textContent =
-                            'NOT PAIRED';
-
-                        badge.className =
-                            'badge badge-not-paired';
-
-                    } else if (device.is_locked) {
-
-                        badge.textContent =
-                            'LOCKED';
-
-                        badge.className =
-                            'badge badge-locked';
-
-                    } else {
-
-                        badge.textContent =
-                            'UNLOCKED';
-
-                        badge.className =
-                            'badge badge-unlocked';
-
-                    }
-
+                if (!device.paired) {
+                    badge.textContent = 'NOT PAIRED';
+                    badge.className = 'badge badge-not-paired';
+                } else if (device.is_locked) {
+                    badge.textContent = 'LOCKED';
+                    badge.className = 'badge badge-locked';
+                } else {
+                    badge.textContent = 'UNLOCKED';
+                    badge.className = 'badge badge-unlocked';
                 }
-            );
+
+            });
 
         })
-        .catch(function() {
-            // Ignore polling errors.
+        .catch(function () {
         });
 
     }, 10000);
@@ -947,5 +838,4 @@
 </script>
 
 </body>
-
 </html>

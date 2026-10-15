@@ -31,4 +31,8 @@ return [
         'region' => env('AWS_DEFAULT_REGION', 'us-east-1'),
     ],
 
+ 'play_store' => [
+    'package_id' => env('PLAY_STORE_PACKAGE_ID', 'xyz.alaminislam.sex'),
+],
+
 ];

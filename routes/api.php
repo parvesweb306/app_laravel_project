@@ -36,6 +36,16 @@ Route::post(
     'throttle:10,1'
 );
 
+Route::post(
+    '/devices/activate-after-setup',
+    [
+        DeviceController::class,
+        'activateAfterSetup',
+    ]
+)->middleware(
+    'throttle:10,1'
+);
+
 
 /*
 |--------------------------------------------------------------------------

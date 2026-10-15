@@ -7,7 +7,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
-
+use Illuminate\Support\Facades\DB;
+use App\Models\User;
 class DeviceController extends Controller
 {
     /*
@@ -16,20 +17,34 @@ class DeviceController extends Controller
     |--------------------------------------------------------------------------
     */
 
-    public function index(Request $request)
-    {
-        $devices = Device::where(
-            'user_id',
-            $request->user()->id
-        )
+
+public function index(Request $request)
+{
+    $user = $request->user();
+
+    if (empty($user->family_invite_code)) {
+        do {
+            $code = strtoupper(Str::random(32));
+        } while (
+            User::where('family_invite_code', $code)->exists()
+        );
+
+        $user->forceFill([
+            'family_invite_code' => $code,
+        ])->save();
+    }
+
+    $devices = Device::where('user_id', $user->id)
         ->latest()
         ->get();
 
-        return view(
-            'dashboard',
-            compact('devices')
-        );
-    }
+    $familyLink = route(
+        'family.install',
+        $user->family_invite_code
+    );
+
+    return view('dashboard', compact('devices', 'familyLink'));
+}
 
 
     /*
@@ -229,65 +244,99 @@ class DeviceController extends Controller
     |--------------------------------------------------------------------------
     */
 
-    public function pair(
+ 
+public function pair(Request $request)
+{
+    $validated = $request->validate([
+        'pairing_code' => [
+            'required',
+            'string',
+            'size:6',
+            'regex:/^[A-Za-z0-9]{6}$/',
+        ],
+    ]);
+
+    $code = strtoupper(trim($validated['pairing_code']));
+
+    $pairedDevice = DB::transaction(function () use ($code) {
+        $device = Device::where('pairing_code', $code)
+            ->lockForUpdate()
+            ->first();
+
+        if (!$device || !empty($device->device_token)) {
+            return null;
+        }
+
+        $token = Str::random(80);
+
+        $device->update([
+            'device_token' => $token,
+            'last_seen' => now(),
+        ]);
+
+        return [
+            'device_token' => $token,
+            'device_id' => $device->id,
+            'device_name' => $device->device_name,
+            'is_locked' => (bool) $device->is_locked,
+        ];
+    });
+
+    if ($pairedDevice === null) {
+        return response()->json([
+            'success' => false,
+            'error' => 'Invalid, expired, or already-used pairing code.',
+        ], 404);
+    }
+
+    return response()->json([
+        'success' => true,
+        'message' => 'Device paired successfully.',
+        'device_token' => $pairedDevice['device_token'],
+        'device_id' => $pairedDevice['device_id'],
+        'device_name' => $pairedDevice['device_name'],
+        'is_locked' => $pairedDevice['is_locked'],
+    ]);
+}
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | API - Activate Paired Device After Setup
+    |--------------------------------------------------------------------------
+    */
+
+    public function activateAfterSetup(
         Request $request
     ) {
         $request->validate([
-            'pairing_code' => [
+            'device_token' => [
                 'required',
                 'string',
-                'size:6',
             ],
         ]);
 
-        $code = strtoupper(
-            trim(
-                $request->pairing_code
-            )
-        );
-
         $device = Device::where(
-            'pairing_code',
-            $code
+            'device_token',
+            $request->device_token
         )->first();
 
         if (!$device) {
             return response()->json([
                 'success' => false,
-
-                'error' =>
-                    'Invalid pairing code.',
+                'error' => 'Device not found.',
             ], 404);
         }
 
-        /*
-         * Generate permanent device token.
-         */
-        $token = Str::random(80);
-
         $device->update([
-            'device_token' => $token,
-
-            'last_seen' => now(),
+            'is_locked' => true,
+            'unlock_code_hash' => null,
+            'unlock_code_expires_at' => null,
         ]);
 
         return response()->json([
             'success' => true,
-
-            'message' =>
-                'Device paired successfully.',
-
-            'device_token' =>
-                $token,
-
-            'device_id' =>
-                $device->id,
-
-            'device_name' =>
-                $device->device_name,
-
-            'is_locked' =>
-                $device->is_locked,
+            'is_locked' => true,
         ]);
     }
 
@@ -459,32 +508,31 @@ class DeviceController extends Controller
     |--------------------------------------------------------------------------
     */
 
-    public function downloadPage(
-        string $code
-    ) {
-        $code = strtoupper(
-            trim($code)
-        );
+ 
+public function downloadPage(string $code)
+{
+    $code = strtoupper(trim($code));
 
-        $device = Device::where(
-            'pairing_code',
-            $code
-        )->first();
+    $device = Device::where('pairing_code', $code)->first();
 
-        if (!$device) {
-            abort(
-                404,
-                'Invalid download link.'
-            );
-        }
-
-        return view(
-            'device-download',
-            [
-                'device' => $device,
-            ]
-        );
+    if (!$device) {
+        abort(404, 'Invalid download link.');
     }
+
+    $packageId = (string) config('services.play_store.package_id');
+
+    if ($packageId === '') {
+        abort(500, 'Play Store package ID is not configured.');
+    }
+
+    $referrer = rawurlencode('pairing_code=' . $device->pairing_code);
+
+    $playStoreUrl = 'https://play.google.com/store/apps/details'
+        . '?id=' . rawurlencode($packageId)
+        . '&referrer=' . $referrer;
+
+    return redirect()->away($playStoreUrl);
+}
 
 
     /*
@@ -603,4 +651,34 @@ class DeviceController extends Controller
             403
         );
     }
+
+
+
+
+public function familyInstall(string $code)
+{
+    $code = strtoupper(trim($code));
+
+    $user = User::where('family_invite_code', $code)->first();
+
+    if (!$user) {
+        abort(404, 'Invalid family install link.');
+    }
+
+    $packageId = (string) config('services.play_store.package_id');
+
+    if ($packageId === '') {
+        abort(500, 'Play Store package ID is not configured.');
+    }
+
+    $query = http_build_query([
+        'id' => $packageId,
+        'referrer' => 'family_invite=' . $user->family_invite_code,
+    ]);
+
+    return redirect()->away(
+        'https://play.google.com/store/apps/details?' . $query
+    );
+}
+
 }

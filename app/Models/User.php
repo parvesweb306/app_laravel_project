@@ -17,11 +17,17 @@ class User extends Authenticatable
      *
      * @var array<int, string>
      */
-    protected $fillable = [
-        'name',
-        'email',
-        'password',
-    ];
+            protected $fillable = [
+                'name',
+                'email',
+                'password',
+                'role',
+                'created_by',
+                'family_invite_code',
+            ];
+
+            const ROLE_ADMIN = 'admin';
+            const ROLE_USER = 'user';
 
     /**
      * The attributes that should be hidden for serialization.
@@ -47,4 +53,27 @@ class User extends Authenticatable
 {
     return $this->hasMany(Device::class);
 }
+
+    /**
+     * Sub-users created by this (main admin) account.
+     */
+    public function subUsers()
+    {
+        return $this->hasMany(User::class, 'created_by');
+    }
+
+    /**
+     * The main admin who created this sub-user, if any.
+     */
+    public function creator()
+    {
+        return $this->belongsTo(User::class, 'created_by');
+    }
+
+    public function isAdmin(): bool
+    {
+        return $this->role === self::ROLE_ADMIN;
+    }
+
+    
 }
