@@ -681,4 +681,68 @@ public function familyInstall(string $code)
     );
 }
 
+
+
+public function enrollFamily(Request $request)
+{
+    $data = $request->validate([
+        'family_invite' => ['required', 'string', 'size:32'],
+        'installation_id' => ['required', 'uuid'],
+        'device_name' => ['required', 'string', 'max:100'],
+    ]);
+
+    $inviteCode = strtoupper(trim($data['family_invite']));
+
+    $device = DB::transaction(function () use ($inviteCode, $data) {
+        $parent = User::where('family_invite_code', $inviteCode)
+            ->lockForUpdate()
+            ->first();
+
+        if (!$parent) {
+            return null;
+        }
+
+        $existingDevice = Device::where(
+            'installation_id',
+            $data['installation_id']
+        )->first();
+
+        if ($existingDevice) {
+            abort_unless(
+                (int) $existingDevice->user_id === (int) $parent->id,
+                409,
+                'This app installation is already linked to another family.'
+            );
+
+            return $existingDevice;
+        }
+
+        return Device::create([
+            'user_id' => $parent->id,
+            'device_name' => $data['device_name'],
+            'pairing_code' => null,
+            'installation_id' => $data['installation_id'],
+            'device_token' => Str::random(80),
+            'is_locked' => false,
+            'last_seen' => now(),
+        ]);
+    });
+
+    if (!$device) {
+        return response()->json([
+            'success' => false,
+            'error' => 'Invalid family invite link.',
+        ], 404);
+    }
+
+    return response()->json([
+        'success' => true,
+        'device_id' => $device->id,
+        'device_name' => $device->device_name,
+        'device_token' => $device->device_token,
+        'is_locked' => (bool) $device->is_locked,
+    ]);
+}
+
+
 }

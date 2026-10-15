@@ -14,7 +14,7 @@ class Device extends Model
         'device_name',
         'pairing_code',
         'device_token',
-
+        'installation_id',
         'is_locked',
         'status',
         'ip_address',

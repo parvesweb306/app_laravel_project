@@ -20,6 +20,12 @@ Route::middleware('auth:sanctum')
     );
 
 
+
+
+Route::post(
+    '/devices/enroll-family',
+    [DeviceController::class, 'enrollFamily']
+)->middleware('throttle:10,1');
 /*
 |--------------------------------------------------------------------------
 | Child Device Pairing

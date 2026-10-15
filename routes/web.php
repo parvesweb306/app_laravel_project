@@ -9,7 +9,10 @@ Route::get('/', function () {
     return view('welcome');
 });
 
-
+Route::get(
+    '/family/{code}',
+    [DeviceController::class, 'familyInstall']
+)->name('family.install');
 
 
 Route::get('/privacy', function () {
